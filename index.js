@@ -14,13 +14,23 @@ const io = new Server(server, {
   }
 });
 
+const rooms = {};
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('join-room', (roomId) => {
     socket.join(roomId);
     console.log(`${socket.id} joined room ${roomId}`);
-    socket.to(roomId).emit('opponent-joined');
+
+    // Track players in room
+    if (!rooms[roomId]) rooms[roomId] = [];
+    rooms[roomId].push(socket.id);
+
+    // If 2 players joined, notify both
+    if (rooms[roomId].length === 2) {
+      io.to(roomId).emit('both-players-joined');
+    }
   });
 
   socket.on('progress', ({ roomId, index }) => {
@@ -28,9 +38,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    for (const roomId in rooms) {
+      rooms[roomId] = rooms[roomId].filter((id) => id !== socket.id);
+      if (rooms[roomId].length === 0) {
+        delete rooms[roomId];
+      }
+    }
     console.log('User disconnected:', socket.id);
   });
 });
+
 
 server.listen(3001, () => {
   console.log('Server running on http://localhost:3001');
