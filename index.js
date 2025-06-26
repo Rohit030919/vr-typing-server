@@ -23,13 +23,12 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`${socket.id} joined room ${roomId}`);
 
-    // Track players in room
     if (!rooms[roomId]) rooms[roomId] = [];
     rooms[roomId].push(socket.id);
 
-    // If 2 players joined, notify both
     if (rooms[roomId].length === 2) {
       io.to(roomId).emit('both-players-joined');
+      console.log(`Both players joined in room ${roomId}`);
     }
   });
 
@@ -47,6 +46,7 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+
 
 
 server.listen(3001, () => {
